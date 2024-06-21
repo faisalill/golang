@@ -4,9 +4,10 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
+	"os"
 	"strconv"
 
+	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -56,16 +57,33 @@ func init() {
 				var connectionCount int
 				var connectionIter int = 1
 
-				fmt.Println(viper.IsSet("username_" + strconv.Itoa(connectionIter)))
-				fmt.Println(viper.IsSet("password_" + strconv.Itoa(connectionIter)))
-				fmt.Println(viper.IsSet("database_" + strconv.Itoa(connectionIter)))
+				var connectionNames []string = []string{}
+				var connectionDatabases []string = []string{}
+				var connectionHosts []string = []string{}
+				var connectionPorts []int = []int{}
 
-				for viper.IsSet("username_"+strconv.Itoa(connectionIter)) && viper.IsSet("password_"+strconv.Itoa(connectionIter)) && viper.IsSet("database_"+strconv.Itoa(connectionIter)) {
+				for viper.IsSet("username_"+strconv.Itoa(connectionIter)) && viper.IsSet("password_"+strconv.Itoa(connectionIter)) && viper.IsSet("database_"+strconv.Itoa(connectionIter)) && viper.IsSet("host_"+strconv.Itoa(connectionIter)) && viper.IsSet("port_"+strconv.Itoa(connectionIter)) {
+					connectionNames = append(connectionNames, viper.Get("username_"+strconv.Itoa(connectionIter)).(string))
+					connectionDatabases = append(connectionDatabases, viper.Get("database_"+strconv.Itoa(connectionIter)).(string))
+					connectionHosts = append(connectionHosts, viper.Get("host_"+strconv.Itoa(connectionIter)).(string))
+					connectionPorts = append(connectionPorts, viper.Get("port_"+strconv.Itoa(connectionIter)).(int))
 					connectionCount += 1
 					connectionIter += 1
 				}
 
-				fmt.Println("Connection count: ", connectionCount)
+				connectionsTable := table.NewWriter()
+				connectionsTable.SetOutputMirror(os.Stdout)
+				connectionsTable.AppendHeader(table.Row{"#", "Username", "Database", "Host", "Port"})
+
+				for index, val := range connectionNames {
+					connectionsTable.AppendRows([]table.Row{
+						{index + 1, val, connectionDatabases[index], connectionHosts[index], connectionPorts[index]},
+					})
+					connectionsTable.AppendSeparator()
+				}
+
+				connectionsTable.SetStyle(table.StyleLight)
+				connectionsTable.Render()
 
 			}
 		},
