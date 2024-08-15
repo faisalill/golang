@@ -1,2 +1,2 @@
 default:
-	go run main.go handlers.go
+	go run main.go handlers.go helper.go
