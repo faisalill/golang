@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/", homeHandler)
+	http.HandleFunc("/", htmlHandler)
 
 	err := http.ListenAndServe(":8000", nil)
 	if err != nil {
