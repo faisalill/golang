@@ -18,20 +18,10 @@ func htmlHandler(res http.ResponseWriter, req *http.Request) {
 		log.Fatal("Error: ", err)
 	}
 
-	data := struct {
-		UserId int32
-		Id     int32
-		Title  string
-		Body   string
-	}{
-		UserId: 1,
-		Id:     3,
-		Title:  "Title of the Blog",
-		Body:   "Body of the whole blog. Body of the whole blog.",
-	}
+	data := GetPosts()
 
 	err = template.Execute(res, data)
 	if err != nil {
-		http.Error(res, err.Error(), 402)
+		http.Error(res, err.Error(), http.StatusInternalServerError)
 	}
 }

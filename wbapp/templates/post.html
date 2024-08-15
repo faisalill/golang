@@ -1,4 +1,7 @@
-<h1>User Id: {{ .UserId }}</h1>
+{{ range . }}
+<h1>Post</h1>
+<h2>UserId: {{ .UserId }}</h2>
 <h2>Id: {{ .Id }}</h2>
 <h3>Title: {{ .Title }}</h3>
 <p>Body: {{ .Body }}</p>
+{{ end }}

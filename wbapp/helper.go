@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -16,7 +15,7 @@ type Post struct {
 	Body   string
 }
 
-func GetPosts() {
+func GetPosts() []Post {
 	resp, err := http.Get(PostsUrl)
 	if err != nil {
 		panic(err)
@@ -31,12 +30,5 @@ func GetPosts() {
 
 	err = json.Unmarshal(data, &Posts)
 
-	for _, value := range Posts {
-		fmt.Println("...")
-		fmt.Println("User Id", value.UserId)
-		fmt.Println("Id", value.Id)
-		fmt.Println("Title", value.Title)
-		fmt.Println("Body", value.Body)
-		fmt.Println("...")
-	}
+	return Posts
 }
