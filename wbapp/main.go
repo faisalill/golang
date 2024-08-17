@@ -58,6 +58,23 @@ func deletePost(db *sql.DB, id int32, userid int32) {
 	fmt.Println("Succesfully Deleted Post")
 }
 
+func createUser(db *sql.DB, username string, password string) {
+	_, err := db.Query("INSERT INTO users(name, password) values($1, $2)", username, password)
+	checkErr(err)
+	fmt.Println("Successfully Created New User")
+}
+
+func checkUser(db *sql.DB, username string, password string) bool {
+	var count int
+	err := db.QueryRow(
+		"SELECT COUNT(*) FROM users WHERE name = $1 AND password = $2", username, password).Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return count > 0
+}
+
 func showPostsHandler(db *sql.DB) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		posts := getPosts(db)
@@ -80,10 +97,61 @@ func formHandler(c *fiber.Ctx) error {
 
 	var buf bytes.Buffer
 	err = temp.ExecuteTemplate(&buf, "form.html", nil)
+	checkErr(err)
 
 	c.Set("Content-Type", "text/html; charset=utf-8")
 
 	return c.SendString(buf.String())
+}
+
+func registrationHandler(c *fiber.Ctx) error {
+	temp, err := template.ParseFiles("register.html")
+	checkErr(err)
+
+	var buf bytes.Buffer
+	err = temp.ExecuteTemplate(&buf, "register.html", nil)
+	checkErr(err)
+
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(buf.String())
+}
+
+func registerUserHandler(db *sql.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		username := c.FormValue("username")
+		password := c.FormValue("password")
+
+		createUser(db, username, password)
+
+		return c.SendString("User Created Successfully")
+	}
+}
+
+func loginHandler(c *fiber.Ctx) error {
+	temp, err := template.ParseFiles("login.html")
+	checkErr(err)
+
+	var buf bytes.Buffer
+	err = temp.ExecuteTemplate(&buf, "login.html", nil)
+	checkErr(err)
+
+	c.Set("Content-Type", "text/html; charset=utf-8")
+	return c.SendString(buf.String())
+}
+
+func loginSessionHandler(db *sql.DB) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		username := c.FormValue("username")
+		password := c.FormValue("password")
+
+		isUserRegistered := checkUser(db, username, password)
+
+		if isUserRegistered {
+			return c.SendString("Session Created ")
+		} else {
+			return c.SendString("Wrong Credentials")
+		}
+	}
 }
 
 func main() {
@@ -98,7 +166,7 @@ func main() {
 
 	app := fiber.New()
 	app.Use(func(c *fiber.Ctx) error {
-		if c.Path() != "/posts" && c.Path() != "/new" && c.Path() != "/createpost" {
+		if c.Path() != "/posts" && c.Path() != "/new" && c.Path() != "/createpost" && c.Path() != "/register" && c.Path() != "/login" {
 			return c.Redirect("/posts")
 		}
 
@@ -116,6 +184,11 @@ func main() {
 		c.Set("Content-Type", "text/html; charset=utf-8")
 		return c.SendString("<h1>Post Created Successfully</h1>")
 	})
+
+	app.Get("/register", registrationHandler)
+	app.Post("/register", registerUserHandler(db))
+	app.Get("/login", loginHandler)
+	app.Post("/login", loginSessionHandler(db))
 
 	log.Fatal(app.Listen(":3000"))
 }
