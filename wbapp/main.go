@@ -8,31 +8,24 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
-	// Define connection string
-	connStr := "user=postgres dbname=wbapp password=password sslmode=disable"
+type Post struct {
+	id     int32
+	userid int32
+	title  string
+	body   string
+}
 
-	// Open a connection to the database
-	db, err := sql.Open("postgres", connStr)
+func checkErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer db.Close()
+}
 
-	// Test the connection
-	err = db.Ping()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("Successfully connected to the database!")
-
+func getPosts(db *sql.DB) []Post {
 	rows, err := db.Query("SELECT * FROM posts")
-	if err != nil {
-		log.Fatal(err)
-	}
+	checkErr(err)
 
-	defer rows.Close()
+	var Posts []Post
 
 	for rows.Next() {
 		var id int32
@@ -40,15 +33,38 @@ func main() {
 		var title string
 		var body string
 
-		err := rows.Scan(&id, &userid, &title, &body)
-		if err != nil {
-			log.Fatal(err)
-		}
+		err = rows.Scan(&id, &userid, &title, &body)
+		checkErr(err)
 
-		fmt.Printf("Id: %d User Id: %d Title: %s Body: %s", id, userid, title, body)
+		Posts = append(Posts, Post{id, userid, title, body})
+
 	}
 
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
+	return Posts
+}
+
+func uploadPost(db *sql.DB, userid int32, title string, body string) {
+	_, err := db.Exec("INSERT INTO posts(userid, title, body) values($1, $2, $3)", userid, title, body)
+	checkErr(err)
+	fmt.Println("Succesfully Uploaded Post")
+}
+
+func deletePost(db *sql.DB, id int32, userid int32) {
+	_, err := db.Exec("DELETE FROM posts WHERE id = $1 AND userid = $2", id, userid)
+	checkErr(err)
+	fmt.Println("Succesfully Deleted Post")
+}
+
+func main() {
+	db, err := sql.Open("postgres", "user=postgres password=password dbname=wbapp sslmode=disable")
+	checkErr(err)
+
+	err = db.Ping()
+	checkErr(err)
+
+	fmt.Println("Connected to Database Successfully")
+
+	posts := getPosts(db)
+
+	fmt.Println(posts)
 }

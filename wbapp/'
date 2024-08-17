@@ -1,4 +1,0 @@
-{{ range . }}
-<h1>User Id: {{ .UserId }}</h1>
-<h2>Id: {{ .Id }}</h2>
-{{ end }}
