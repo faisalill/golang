@@ -1,0 +1,41 @@
+package main
+
+import (
+	"net/http"
+
+	"github.com/gorilla/mux"
+)
+
+type ApiServer struct {
+	addr string
+}
+
+func Server(address string) *ApiServer {
+	return &ApiServer{
+		addr: address,
+	}
+}
+
+func (s *ApiServer) Run() {
+	mux := mux.NewRouter()
+
+	mux.HandleFunc("/{id}", homeHandler)
+	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/register/{id}:{url}", registerHandler)
+
+	http.ListenAndServe(s.addr, mux)
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Server is running"))
+}
+
+func homeHandler(w http.ResponseWriter, r *http.Request) {
+	Vars := mux.Vars(r)
+	id := Vars["id"]
+	w.Write([]byte("This is the home route"))
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Server is running"))
+}
